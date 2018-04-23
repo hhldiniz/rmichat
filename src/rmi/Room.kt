@@ -8,4 +8,9 @@ class Room {
     {
         users.add(user)
     }
+
+    fun postMessage(message: String)
+    {
+        messages.add(message)
+    }
 }
