@@ -1,10 +1,15 @@
 package rmi
 
 import java.rmi.Naming
+import java.rmi.RemoteException
 import java.util.*
+import kotlin.system.exitProcess
 
 class User(private val name: String) {
-
+    fun getName(): String
+    {
+        return name
+    }
 }
 
 fun main(args: Array<String>)
@@ -13,38 +18,69 @@ fun main(args: Array<String>)
     System.out.println("Digite um nome de usuário")
     val username = scanner.nextLine()
     val user = User(username)
-    val remoteObject: Server = Naming.lookup("chat") as Server
+    val server: Server = Naming.lookup("chat") as Server
     while(true)
     {
-        System.out.println("Escolha uma opção")
-        System.out.println("1 - Entrar em uma sala")
-        System.out.println("2 - Enviar mensagem")
-        System.out.println("3 - Ver usuários da sala")
-        System.out.println("4 - Criar uma sala")
-        System.out.println("0 - Sair")
+        println("Escolha uma opção")
+        println("1 - Entrar em uma sala")
+        println("2 - Enviar mensagem")
+        println("3 - Ver usuários da sala")
+        println("4 - Criar uma sala")
+        println("0 - Sair")
         val op = scanner.nextInt()
-        when(op)
+        try {
+            when(op)
+            {
+                1->
+                {
+                    println("Salas disponíveis: ")
+                    val allRooms = server.getAllRooms()
+                    allRooms.forEachIndexed { index, room ->
+                        println("$index - ${room.getName()}")
+                    }
+                    try {
+                        val room = allRooms[scanner.nextInt()]
+                        server.entryRoom(room, user)
+                    }catch (e: ArrayIndexOutOfBoundsException)
+                    {
+                        println("Essa sala não existe!")
+                    }
+                }
+                2->
+                {
+                    val myRoom = server.getMyRoom(user)
+                    if(myRoom == null)
+                        println("Você ainda não está em uma sala")
+                    else
+                    {
+                        println("Digite uma mensagem para enviar")
+                        server.postMessage(scanner.nextLine(), myRoom)
+                        println("Mensagem enviada!")
+                    }
+                }
+                3->
+                {
+                    val myRoom = server.getMyRoom(user)
+                    myRoom?.getAllUsers()?.forEachIndexed { index, userInRoom ->
+                        println("$index - ${userInRoom.getName()}")
+                    }
+                }
+                4->
+                {
+                    println("Digite o nome da nova sala")
+                    server.createRoom(scanner.nextLine())
+                }
+                0->
+                {
+                    server.exitRoom(user)
+                    exitProcess(0)
+                }
+            }
+
+        }catch (e: RemoteException)
         {
-            1->
-            {
-
-            }
-            2->
-            {
-
-            }
-            3->
-            {
-
-            }
-            4->
-            {
-
-            }
-            0->
-            {
-
-            }
+            e.printStackTrace()
+            println("Um erro ocorreu. Verifique sua conexão")
         }
     }
 }

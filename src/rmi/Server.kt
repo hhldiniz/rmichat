@@ -1,25 +1,46 @@
 package rmi
 
 import rmi.interfaces.RemoteInterface
+import java.io.IOException
 import java.rmi.Naming
+import java.rmi.registry.LocateRegistry
 import java.rmi.server.UnicastRemoteObject
-import java.util.*
-import kotlin.collections.ArrayList
 
 class Server:UnicastRemoteObject(), RemoteInterface {
     private val roomList = ArrayList<Room>()
-    private val usersInRoom = Hashtable<Room, ArrayList<User>>()
 
-    override fun createRoom() {
+    override fun createRoom(name: String) {
         val room = Room()
+        room.setName(name)
         roomList.add(room)
     }
 
-    override fun entryRoom(room: Room, user: User) {
-        if(usersInRoom.contains(room))
-        {
-            usersInRoom[room]?.add(user)
+    override fun getMyRoom(user: User): Room? {
+        roomList.forEach{
+            if (it.getAllUsers().contains(user))
+            {
+                return it
+            }
         }
+        return null
+    }
+
+    override fun exitRoom(user: User) {
+        roomList.forEach{
+            val userList = it.getAllUsers()
+            if(userList.contains(user))
+            {
+                it.userExit(user)
+            }
+        }
+    }
+
+    override fun entryRoom(room: Room, user: User) {
+        room.addUser(user)
+    }
+
+    override fun getAllRooms(): ArrayList<Room> {
+        return roomList
     }
 
     override fun postMessage(text: String, room: Room) {
@@ -29,6 +50,13 @@ class Server:UnicastRemoteObject(), RemoteInterface {
 
 fun main(args: Array<String>)
 {
-    val server = Server()
-    Naming.rebind("chat", server)
+    try {
+        val server = Server()
+        LocateRegistry.createRegistry(8080)
+        Naming.rebind("rmi://localhost:8080/Server", server)
+        println("Chat server online!")
+    }catch (e: IOException)
+    {
+        e.printStackTrace()
+    }
 }
