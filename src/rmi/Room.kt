@@ -1,6 +1,8 @@
 package rmi
 
-class Room {
+import java.io.Serializable
+
+class Room: Serializable {
     private val messages = ArrayList<String>()
     private val users = ArrayList<User>()
     private var name = ""
@@ -28,6 +30,11 @@ class Room {
     fun postMessage(message: String)
     {
         messages.add(message)
+    }
+
+    fun getMessages(): ArrayList<String>
+    {
+        return messages
     }
 
     fun userExit(user: User)

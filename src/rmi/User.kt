@@ -1,11 +1,13 @@
 package rmi
 
+import rmi.interfaces.RemoteInterface
+import java.io.Serializable
 import java.rmi.Naming
 import java.rmi.RemoteException
 import java.util.*
 import kotlin.system.exitProcess
 
-class User(private val name: String) {
+class User(private val name: String): Serializable{
     fun getName(): String
     {
         return name
@@ -18,7 +20,7 @@ fun main(args: Array<String>)
     System.out.println("Digite um nome de usuário")
     val username = scanner.nextLine()
     val user = User(username)
-    val server: Server = Naming.lookup("chat") as Server
+    val server: RemoteInterface = Naming.lookup("rmi://localhost:8080/Server") as RemoteInterface
     while(true)
     {
         println("Escolha uma opção")
@@ -54,8 +56,12 @@ fun main(args: Array<String>)
                     else
                     {
                         println("Digite uma mensagem para enviar")
-                        server.postMessage(scanner.nextLine(), myRoom)
+                        val msgScanner = Scanner(System.`in`)
+                        server.postMessage(msgScanner.nextLine(), myRoom)
                         println("Mensagem enviada!")
+                        myRoom.getMessages().forEach {
+                            println(it)
+                        }
                     }
                 }
                 3->
@@ -68,7 +74,9 @@ fun main(args: Array<String>)
                 4->
                 {
                     println("Digite o nome da nova sala")
-                    server.createRoom(scanner.nextLine())
+                    val newRoomScanner = Scanner(System.`in`)
+                    val roomName = newRoomScanner.nextLine()
+                    server.createRoom(roomName)
                 }
                 0->
                 {
